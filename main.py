@@ -1,241 +1,329 @@
 import time
-import json
-import requests
-from pycoingecko import CoinGeckoAPI
-from os.path import join
-import os
-import matplotlib.pyplot as plt
-import numpy as np
-from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.support.ui import Select
-from selenium.webdriver.common.proxy import Proxy, ProxyType
-import pandas as pd
-import matplotlib.pyplot as mp
-cg = CoinGeckoAPI()
-# print(cg.get_price(ids='bitcoin,litecoin,ethereum', vs_currencies='usd'))
+from tradingview_ta import *
 
-whale_address = "0xae4d837caa0c53579f8a156633355df5058b02f3"
+"""https://tvdb.brianthe.dev/"""
 
-# Main Func - User input address
-def main():
-    crypto_address = input("Please enter: ")
-    print(F"The address you would like to use is {crypto_address}. ")
-
-# Scrape Func
-def scrape():
-    crypto_address = "0xfe3e6a25e6b192a42a44ecddcd13796471735acf"
-    date = "11-11-2021"
-    token_info = requests.get("http://api.coingecko.com/api/v3/coins/ethereum/contract/" + crypto_address)
-    tjson = token_info.json()
-    token_name = tjson['id']
-    print(f"Selected token: ", token_name)
-    r = requests.get(F"http://api.coingecko.csom/api/v3/coins/{token_name}/history?date={date}&localization=false")
-    # print(r.status_code)
-    # print(r.text)
-    json_response = r.json()
-    # print(json_response)
-    value = json_response["market_data"]["current_price"]["usd"]
-    print("The token " + token_name + " was worth " + str(value) + " on " + date)
-
-
-def get_token_value_on_date(address, date, id):
-    try:
-        r = requests.get(F"http://api.coingecko.com/api/v3/coins/{id}/history?date={date}&localization=false")
-        jsonresponse = r.json()
-        value = jsonresponse["market_data"]["current_price"]["usd"]
-        value = str(value)
-        print(F"Token {id} was worth {value} on {date}")
-    except KeyError:
-        print("Unable to access token ID. Please try a different method")
-
-
-def ids():
-    tokeninfo = requests.get(F"https://api.coingecko.com/api/v3/coins/list")
-    tjson = tokeninfo.json()
-    print(F"{tjson}")
-
-def ACTUALget_json_info(address, date, addresses):
-    for address in addresses:
-        try:
-            id = "binance-smart-chain"
-            contract_address = address
-            tokeninfo = requests.get(F"http://api.coingecko.com/api/v3/coins/{id}/contract/{contract_address}")
-            tjson = tokeninfo.json()
-            # print(F"{tjson}")
-            with open(F"~/Desktop/{address}.json", "a") as o:
-                # print(json.dumps(tjson, indent=4))
-                # Try and change file name to the name of the coin
-                o.write(str(json.dumps(tjson, indent=4)))
-
-        except KeyError:
-            print(F"Unable to access token ID for {address}. Please try a different method")
-
-def get_json_info(address, date, addresses):
-    for address in addresses:
-        try:
-            id = "binance-smart-chain"
-            contract_address = address
-            tokeninfo = requests.get(F"http://api.coingecko.com/api/v3/coins/{id}/contract/{contract_address}")
-            tjson = tokeninfo.json()
-            # print(F"{tjson}")
-            """with open(F"/Desktop/{address}.json", "a") as o:
-                # print(json.dumps(tjson, indent=4))
-                # Try and change file name to the name of the coin
-                o.write(str(json.dumps(tjson, indent=4)))"""
-            print('Outputting to desktop')
-            path = "/Desktop/"
-
-            name = input('Enter a name for your file: ')+'.txt'  # Name of text file coerced with +.txt
-
-            try:
-                file = open(join(path, name),'w')   # Trying to create a new file or open one
-                file.close()
-
-
-            except:
-                print('Something went wrong! Cannot tell what?')
-                title = "Error"
-                message = "----"
-                command = f'''
-                osascript -e 'display notification "{message}" with title "{title}"'
-                '''
-                os.system(command)
-
-        except KeyError:
-            print(F"Unable to access token ID for {address}. Please try a different method")
-
-
-def transaction_history():
-    id = "binance-smart-chain"
-    whale_address = "0xae4d837caa0c53579f8a156633355df5058b02f3"
-    contract_address = "0x622a1297057ea233287ce77bdbf2ab4e63609f23"
-    tokeninfo = requests.get(F"http://api.coingecko.com/api/v3/coins/{id}/contract/{whale_address}")
-    # tokeninfo = requests.get(F"http://api.coingecko.com/api/v3/asset_platforms")
-    tjson = tokeninfo.json()
-    print(tjson)
-    # ID = binance-smart-chain
-
-
-def get_trending_tokens():
-    tokeninfo = requests.get(F"https://api.coingecko.com/api/v3/search/trending/")
-    # https://api.coingecko.com/api/v3/simple/token_price/{id}?contract_addresses={contract-address}&vs_currencies={currency}
-    tjson = tokeninfo.json()
-    print(tjson)
-
-
-def checkIfValidAPI():
-    r = requests.get("http://api.coingecko.com/api/v3/coins/unfederalreserve/history?date=05-05-2021&localization=false")
-    if r.status_code == requests.codes.ok:
-        pass
-        print("API connection successful")
+def Main():
+    time.sleep(1)
+    print("Which module would you like to run first? ")
+    print("1. Technical Analysis Trading Bot")
+    print("2. Ethereum Whale Wallet Tracker\n")
+    moduleChoice = input("")
+    if moduleChoice == "1":
+        TradeBot()
+    elif moduleChoice == "2":
+        WhaleTracker()
     else:
-        print("Error")
+        print("I'm unsure, try again")
 
 
-def LiveTracker(address):
-    time.sleep(0.5)
-    fp = webdriver.FirefoxProfile()
-
-    fp.set_preference("browser.download.folderList",2)
-    fp.set_preference("browser.download.manager.showWhenStarting",False)
-    fp.set_preference("browser.download.dir",os.getcwd())
-    fp.set_preference("browser.helperApps.neverAsk.saveToDisk","text/csv")
-    # Still need to confirm
-    #browser = webdriver.Firefox(firefox_profile=fp)
-    #driver = webdriver.Firefox()    # tokeninfo = requests.get(F"http://api.coingecko.com/api/v3/coins/{id}/contract/{whale_address}")
-    whale_address = address
-    # check against prev json
-
-
-    #driver.get(F'https://app.zerion.io/{whale_address}/history')
-
-    #time.sleep(5)
-
-
-    #driver.find_element("Button__ButtonElement-sy8p3t-0 bMlPDN").click()
-    #try:
-        #driver.find_element_by_class_name("bMlPDN").click()
-
-    #driver.click("Button__ButtonElement-sy8p3t-0 bMlPDN")
-# Have all coin IDs stored in ids.json
-    import glob
-    # directory = '~/Downloads'
-    # max([os.path.join(directory,d) for d in os.listdir(directory)], key=os.path.getmtime)
+def TradeBot():
+    print("Welcome to the trading bot. ")
+    # pair = input("What trading pair would you like to use? (E.g BTCUSDT)\n")
+    pair = "BTCUSDT"
+    """
+    Available Intervals: 
+    
+    INTERVAL_1_MINUTE = "1m"
+    INTERVAL_5_MINUTES = "5m"
+    INTERVAL_15_MINUTES = "15m"
+    INTERVAL_30_MINUTES = "30m"
+    INTERVAL_1_HOUR = "1h"
+    INTERVAL_2_HOURS = "2h"
+    INTERVAL_4_HOURS = "4h"
+    INTERVAL_1_DAY = "1d"
+    INTERVAL_1_WEEK = "1W"
+    INTERVAL_1_MONTH = "1M"
+    
+    """
 
 
+    BTC = TA_Handler(
+        symbol="BTCUSDT",
+        screener = "CRYPTO",
+        exchange = "BINANCE",
+        interval = Interval.INTERVAL_1_DAY,
+        timeout = 3.0
+    )
 
-def graph():
-    #data = [["Australia", 2500, 2021],["Bangladesh", 1000, 2021],["England", 2000, 2021],["India", 3000, 2021],["Srilanka", 1500, 2021]
-    #dataFrame = pd.DataFrame(data, columns=["Team","Rank_Points", "Year"])
-    #dataFrame.plot(x="Team", y=["Rank_Points","Year" ], kind="line", figsize=(10, 9)
-    print("graph")
+    generic = TA_Handler(
+        symbol=pair,
+        screener="CRYPTO",
+        exchange="BINANCE",
+        interval=Interval.INTERVAL_1_DAY,
+        timeout=3.0
+    )
 
-    Time = [16,17,18,19,20,21,22,23,24,25]
-    Money = [0.1, 0.2, 0.3, 0.4, 0.3,0.5, 0.6, 0.77, 0.8, 1]
-    CB91_Blue = '#2CBDFE'
+    analysis = input("What method of TA would you like to use first? (Oscillators [o], Moving Averages [ma), Indicators [i]\n")
+    analysis = "i"
+    if analysis == "o":
+        print(generic.get_analysis().oscillators)
+    elif analysis == "ma":
+        print(generic.get_analysis().moving_averages)
+    elif analysis == "i":
+        indiChoice = input("What indicator would you like to use first? (RSI, MACD)\n").lower()
 
-    color_list = [CB91_Blue]
-    plt.rcParams['axes.prop_cycle'] = plt.cycler(color=color_list)
-    plt.plot(Time,Money)
-    plt.title('Graph')
-    plt.xlabel('Time')
-    plt.ylabel('Money')
-    plt.show()
-    """n = 1024
-    X = np.random.normal(0, 1, n)
-    Y = np.random.normal(0, 1, n)
-    T = np.arctan2(X, Y)
-
-    plt.scatter(np.arange(5), np.arange(5))
-
-    plt.xticks(())
-    plt.yticks(())
-
-    plt.show()"""
-
-
-def Constant():
-            id = "binancecoin"
-            coins = requests.get(F"http://api.coingecko.com/api/v3/coins/")
-            coinslist = coins.json()
-            print(coinslist)
-            tokeninfo = requests.get(F"https://api.coingecko.com/api/v3/simple/price?ids={id}&vs_currencies=usd")
-            tjson = tokeninfo.json()
-            #print(tjson)
-            value = tjson[id]["usd"]
-            print(value)
+        if indiChoice == "rsi":
+            print(generic.get_analysis().indicators["RSI"])
+        elif indiChoice == "macd":
+            print(generic.get_analysis().indicators["MACD"])
+        elif indiChoice == "supertrend":
+            print(generic.get_analysis().indicators["supertrend"])
+        else:
+            print("Unknown, try again.")
+    else:
+        print("Unknown, try again")
 
 
-address = "0xae4d837caa0c53579f8a156633355df5058b02f3"
-date = "1-11-2021"
-addresses = ["0xfe3e6a25e6b192a42a44ecddcd13796471735acf", "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"]
-id = "binancecoin"
+    print(generic.get_analysis())
+    print(generic.get_analysis().summary)
+    """ Options:
+    get_analysis().oscillators
+    get_analysis().moving_averages
+    get_analysis().indicators
+    
+    Useful indicators:
 
-checkIfValidAPI()
+    Opening price: analysis.indicators["open"]
+    Closing price: analysis.indicators["close"]
+    Momentum: analysis.indicators["Mom"]
+    RSI: analysis.indicators["RSI"]
+    MACD: analysis.indicators["MACD.macd"]
 
-#LiveTracker(address)
-#graph()
-Constant()
-#get_json_info(address, date, addresses)
-# transaction_history()
-# get_new_tokens()
-#ids()
+    [
+      "name",
+      "change",
+      "close",
+      "change_abs",
+      "high",
+      "low",
+      "volume",
+      "Recommend.All",
+      "exchange",
+      "High.1M",
+      "Low.1M",
+      "Pivot.M.Camarilla.Middle",
+      "Pivot.M.Camarilla.R1",
+      "Pivot.M.Camarilla.R2",
+      "Pivot.M.Camarilla.R3",
+      "Pivot.M.Camarilla.S1",
+      "Pivot.M.Camarilla.S2",
+      "Pivot.M.Camarilla.S3",
+      "Pivot.M.Classic.Middle",
+      "Pivot.M.Classic.R1",
+      "Pivot.M.Classic.R2",
+      "Pivot.M.Classic.R3",
+      "Pivot.M.Classic.S1",
+      "Pivot.M.Classic.S2",
+      "Pivot.M.Classic.S3",
+      "Pivot.M.Demark.Middle",
+      "Pivot.M.Demark.R1",
+      "Pivot.M.Demark.S1",
+      "Pivot.M.Fibonacci.Middle",
+      "Pivot.M.Fibonacci.R1",
+      "Pivot.M.Fibonacci.R2",
+      "Pivot.M.Fibonacci.R3",
+      "Pivot.M.Fibonacci.S1",
+      "Pivot.M.Fibonacci.S2",
+      "Pivot.M.Fibonacci.S3",
+      "Pivot.M.Woodie.Middle",
+      "Pivot.M.Woodie.R1",
+      "Pivot.M.Woodie.R2",
+      "Pivot.M.Woodie.R3",
+      "Pivot.M.Woodie.S1",
+      "Pivot.M.Woodie.S2",
+      "Pivot.M.Woodie.S3",
+      "High.3M",
+      "Low.3M",
+      "Perf.3M",
+      "price_52_week_high",
+      "price_52_week_low",
+      "High.6M",
+      "Low.6M",
+      "Perf.6M",
+      "High.All",
+      "Low.All",
+      "Aroon.Down",
+      "Aroon.Up",
+      "ADR",
+      "ADX",
+      "ATR",
+      "average_volume_10d_calc",
+      "Perf.Y",
+      "Perf.YTD",
+      "W.R",
+      "average_volume_30d_calc",
+      "average_volume_60d_calc",
+      "average_volume_90d_calc",
+      "AO",
+      "BB.lower",
+      "BB.upper",
+      "BBPower",
+      "change_abs|15",
+      "change|15",
+      "change_abs|60",
+      "change|60",
+      "change_abs|1",
+      "change|1",
+      "change_abs|240",
+      "change|240",
+      "change_abs|5",
+      "change|5",
+      "change_from_open_abs",
+      "change_from_open",
+      "CCI20",
+      "DonchCh20.Lower",
+      "DonchCh20.Upper",
+      "EMA10",
+      "EMA100",
+      "EMA20",
+      "EMA200",
+      "EMA30",
+      "EMA5",
+      "EMA50",
+      "gap",
+      "HullMA9",
+      "Ichimoku.BLine",
+      "Ichimoku.CLine",
+      "Ichimoku.Lead1",
+      "Ichimoku.Lead2",
+      "KltChnl.lower",
+      "KltChnl.upper",
+      "MACD.macd",
+      "MACD.signal",
+      "market_cap_calc",
+      "Mom",
+      "Perf.1M",
+      "Recommend.MA",
+      "open",
+      "Recommend.Other",
+      "P.SAR",
+      "name",
+      "ROC",
+      "RSI",
+      "RSI7",
+      "relative_volume_10d_calc",
+      "SMA10",
+      "SMA100",
+      "SMA20",
+      "SMA200",
+      "SMA30",
+      "SMA5",
+      "SMA50",
+      "Stoch.D",
+      "Stoch.K",
+      "Stoch.RSI.K",
+      "Stoch.RSI.D",
+      "UO",
+      "Volatility.D",
+      "Volatility.M",
+      "Volatility.W",
+      "VWAP",
+      "VWMA",
+      "Perf.W",
+      "description",
+      "name",
+      "type",
+      "subtype",
+      "update_mode",
+      "pricescale",
+      "minmov",
+      "fractional",
+      "minmove2",
+      "ADX-DI[1]",
+      "Rec.WR",
+      "AO",
+      "AO[1]",
+      "close",
+      "BB.lower",
+      "BB.upper",
+      "Rec.BBPower",
+      "CCI20",
+      "CCI20[1]",
+      "EMA10",
+      "EMA100",
+      "EMA20",
+      "EMA200",
+      "EMA30",
+      "EMA5",
+      "EMA50",
+      "Rec.HullMA9",
+      "Rec.Ichimoku",
+      "MACD.macd",
+      "MACD.signal",
+      "Mom",
+      "Mom[1]",
+      "P.SAR",
+      "open",
+      "Candle.AbandonedBaby.Bearish",
+      "Candle.AbandonedBaby.Bullish",
+      "Candle.Engulfing.Bearish",
+      "Candle.Harami.Bearish",
+      "Candle.Engulfing.Bullish",
+      "Candle.Harami.Bullish",
+      "Candle.Doji",
+      "Candle.Doji.Dragonfly",
+      "Candle.EveningStar",
+      "Candle.Doji.Gravestone",
+      "Candle.Hammer",
+      "Candle.HangingMan",
+      "Candle.InvertedHammer",
+      "Candle.Kicking.Bearish",
+      "Candle.Kicking.Bullish",
+      "Candle.LongShadow.Lower",
+      "Candle.LongShadow.Upper",
+      "Candle.Marubozu.Black",
+      "Candle.Marubozu.White",
+      "Candle.MorningStar",
+      "Candle.ShootingStar",
+      "Candle.SpinningTop.Black",
+      "Candle.SpinningTop.White",
+      "Candle.3BlackCrows",
+      "Candle.3WhiteSoldiers",
+      "Candle.TriStar.Bearish",
+      "Candle.TriStar.Bullish",
+      "RSI",
+      "RSI[1]",
+      "RSI7",
+      "RSI7[1]",
+      "SMA10",
+      "SMA100",
+      "SMA20",
+      "SMA200",
+      "SMA30",
+      "SMA5",
+      "SMA50",
+      "Stoch.K",
+      "Stoch.D",
+      "Stoch.K[1]",
+      "Stoch.D[1]",
+      "Rec.Stoch.RSI",
+      "Rec.UO",
+      "Rec.VWMA",
+    ]
+
+    print(BTC.get_analysis().summary)
+    Example output: {"RECOMMENDATION": "BUY", "BUY": 8, "NEUTRAL": 6, "SELL": 3}
+    analysis = get_multiple_analysis(screener="america", interval=Interval.INTERVAL_1_HOUR, symbols=["nasdaq:tsla", "nyse:docn", "nasdaq:aapl"])
+    """
+
+def rsi():
+    pair = "BTCUSDT"
+    print("fCalculating RSI for {pair}")
+    generic = TA_Handler(
+        symbol=pair,
+        screener="CRYPTO",
+        exchange="BINANCE",
+        interval=Interval.INTERVAL_1_DAY,
+        timeout=3.0
+    )
+    print(generic.get_analysis().indicators["RSI"])
 
 
-# Working functions
-#get_token_value_on_date(address, date, id)
-# get_trending_tokens()
-# scrape()
-"""
-title = "Error"
-message = "----"
-command = f'''
-osascript -e 'display notification "{message}" with title "{title}"'
-'''
-os.system(command)
-"""
+def WhaleTracker():
+    print("We trackin")
 
-"""    Catch Exception as exc: \
-        print(str(exc))
-"""
+
+
+# TradeBot()
+rsi()
